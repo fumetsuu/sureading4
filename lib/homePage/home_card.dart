@@ -3,29 +3,61 @@ import 'dart:io';
 
 import '../card/card_template.dart';
 import '../volumePage/volume_page.dart';
-class HomeCard extends StatelessWidget {
+import '../util.dart';
 
+class HomeCard extends StatefulWidget {
   final String mangaPath;
   String mangaTitle;
 
   HomeCard(this.mangaPath) {
     List<String> splits = mangaPath.split('/');
-    mangaTitle = splits[splits.length-1];
+    mangaTitle = splits[splits.length - 1];
+  }
+
+  @override
+  State<StatefulWidget> createState() {
+    return HomeCardState();
+  }
+}
+
+class HomeCardState extends State<HomeCard> {
+  String imagePath;
+
+  void initState() {
+    _getCoverImagePath();
+    super.initState();
   }
 
   Widget build(BuildContext context) {
-    return generateCard(context, mangaTitle, _getCoverImagePath(), _gotoVolumePage);
+    return generateCard(context, widget.mangaTitle, imagePath, _gotoVolumePage);
   }
 
-  String _getCoverImagePath() {
-    if(File(mangaPath + '/cover.jpg').existsSync()) {
-      return mangaPath + '/cover.jpg';
+  void _getCoverImagePath() {
+    if (File(widget.mangaPath + '/cover.jpg').existsSync()) {
+      setState(() {
+        imagePath = widget.mangaPath + '/cover.jpg';
+      });
     } else {
-      return Directory(Directory(mangaPath).listSync()[0].path).listSync().reversed.toList()[0].path;
+      Directory(widget.mangaPath)
+          .list()
+          .firstWhere((FileSystemEntity entity) =>
+              FileSystemEntity.isDirectorySync(entity.path))
+          .then((FileSystemEntity entity) => Directory(entity.path)
+              .list()
+              .firstWhere((FileSystemEntity entity) => isImage(entity.path)))
+          .then((FileSystemEntity entity) {
+        setState(() {
+          imagePath = entity.path;
+        });
+      });
     }
   }
 
   void _gotoVolumePage(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => VolumePage(mangaPath, mangaTitle) ));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                VolumePage(widget.mangaPath, widget.mangaTitle)));
   }
 }

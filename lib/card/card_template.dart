@@ -11,7 +11,7 @@ Widget generateCard(BuildContext context, String title, String imagePath, [Funct
           fit: StackFit.expand,
           children: <Widget>[
             Image(
-              image: FileImage(File(imagePath)),
+              image: imagePath != null ? FileImage(File(imagePath)) : AssetImage('assets/placeholder.jpg'),
               fit: BoxFit.cover,
             ),
             Container(
