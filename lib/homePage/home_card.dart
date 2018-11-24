@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 
+import '../card/card_template.dart';
+import '../volumePage/volume_page.dart';
 class HomeCard extends StatelessWidget {
 
   final String mangaPath;
@@ -12,28 +14,7 @@ class HomeCard extends StatelessWidget {
   }
 
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(8.0),
-      child: Stack(
-        alignment: Alignment.bottomLeft,
-        fit: StackFit.expand,
-        children: <Widget>[
-          Image(
-            image: FileImage(File(_getCoverImagePath())),
-            fit: BoxFit.cover,
-          ),
-          Container(
-            child: Stack(
-              alignment: Alignment.bottomLeft,
-              children: <Widget>[
-                SizedBox(height: 40, child: Container(decoration:  BoxDecoration(gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Colors.black54, Colors.black12, Colors.transparent], stops: [0.2, 0.7, 1])))),
-                Container(child: Text(mangaTitle, overflow: TextOverflow.ellipsis, style: Theme.of(context).primaryTextTheme.body2), padding: EdgeInsets.all(6.0)),
-              ],
-            ) 
-          )
-        ],
-      )
-    );
+    return generateCard(context, mangaTitle, _getCoverImagePath(), _gotoVolumePage);
   }
 
   String _getCoverImagePath() {
@@ -42,5 +23,9 @@ class HomeCard extends StatelessWidget {
     } else {
       return Directory(Directory(mangaPath).listSync()[0].path).listSync()[0].path;
     }
+  }
+
+  void _gotoVolumePage(BuildContext context) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => VolumePage(mangaPath, mangaTitle) ));
   }
 }

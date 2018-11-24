@@ -4,6 +4,7 @@ import 'dart:io';
 
 import '../colours.dart';
 import './home_card.dart';
+import '../card/card_gridview_builder.dart';
 
 class HomePage extends StatefulWidget {
   final String _mediaFolderPath;
@@ -54,37 +55,27 @@ class HomePageState extends State<HomePage> {
         ))
       );
     } else {
-
-      Directory mediaDir = new Directory(_mediaFolderPath);
-
-      List<String> mangaPaths = [];
-
-      mediaDir.listSync(recursive: false).map((FileSystemEntity entity) {
-        return mangaPaths.add(entity.path);
-      }).toList();
-
-
       return Scaffold(
         appBar: AppBar(
             title: Text('sureading',
                 style: Theme.of(context).primaryTextTheme.headline)),
-        body: _buildHomeView(mangaPaths)
+        body: _buildHomeView()
       );
-
     }
   }
 
-  Widget _buildHomeView(List<String> mangaPaths) {
-    return Container(
-      padding: EdgeInsets.all(8.0),
-      child: GridView.builder(
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: MediaQuery.of(context).size.width*0.8, childAspectRatio: 0.72),
-        itemCount: mangaPaths.length,
-        itemBuilder: (context, i) {
-          return HomeCard(mangaPaths[i]);
-        },
-      )
-    );
+  Widget _buildHomeView() {
+    
+    Directory mediaDir = new Directory(_mediaFolderPath);
+
+    List<String> mangaPaths = [];
+
+    mediaDir.listSync(recursive: false).forEach((FileSystemEntity entity) {
+      mangaPaths.add(entity.path);
+    });
+
+    return buildCardGridview(context, mangaPaths, (String path) => HomeCard(path));
   }
+
 
 }
