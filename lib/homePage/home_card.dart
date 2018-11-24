@@ -21,7 +21,7 @@ class HomeCard extends StatelessWidget {
     if(File(mangaPath + '/cover.jpg').existsSync()) {
       return mangaPath + '/cover.jpg';
     } else {
-      return Directory(Directory(mangaPath).listSync()[0].path).listSync()[0].path;
+      return Directory(Directory(mangaPath).listSync()[0].path).listSync().reversed.toList()[0].path;
     }
   }
 
