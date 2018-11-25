@@ -34,9 +34,6 @@ class ReadingPageState extends State<ReadingPage> {
   void initState() {
     _populateImagePathsList();
     //TODO: set currentPage to page number saved in bookmarks
-    //viewportFraction hack to allow adjacent pages to load before scrolling
-    _pageController =
-        PageController(initialPage: currentPage, viewportFraction: 0.99);
 
     SystemChrome.setEnabledSystemUIOverlays([]);
 
@@ -47,7 +44,7 @@ class ReadingPageState extends State<ReadingPage> {
 
   void dispose() {
     timer.cancel();
-    _pageController.dispose();
+    
     super.dispose();
   }
 
@@ -58,27 +55,39 @@ class ReadingPageState extends State<ReadingPage> {
               child: Text('loading...',
                   style: Theme.of(context).primaryTextTheme.headline)));
     } else if(_showGridview) {
-      return Scaffold(
-        body: Container(
-          child: GridView.builder(
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: MediaQuery.of(context).size.width*0.3, childAspectRatio: 0.6),
-            itemCount: imagePaths.length,
-            itemBuilder: (context, i) {
-              return Container(
-                color: currentPage == i ? lightblue : Colors.transparent,
-                padding: EdgeInsets.all(8.0),
-                child: Column(
-                  children: <Widget>[
-                    Image(image: FileImage(File(imagePaths[i])), fit: BoxFit.fitHeight),
-                    Text((i+1).toString(), style: Theme.of(context).primaryTextTheme.button)
-                  ],
-                )
-              );
-            },
+      return WillPopScope(
+        onWillPop: _handleGridBack,
+        child: Scaffold(
+          body: Container(
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: MediaQuery.of(context).size.width*0.3, childAspectRatio: 0.6),
+              itemCount: imagePaths.length,
+              itemBuilder: (context, i) {
+                return GestureDetector(
+                  onTap: () => _handleGridPageTapped(i),
+                  child: Container(
+                    color: currentPage == i ? lightblue : Colors.transparent,
+                    padding: EdgeInsets.all(8.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      children: <Widget>[
+                        Text((i+1).toString(), style: Theme.of(context).primaryTextTheme.button),
+                        Container(
+                          height: MediaQuery.of(context).size.height * 0.19,
+                          child: Image(image: FileImage(File(imagePaths[i]))),
+                        )
+                      ],
+                    )
+                  )
+                );
+              },
+            )
           )
         )
       );
     } else {
+      //viewportFraction hack to allow adjacent pages to load before scrolling
+      _pageController = PageController(initialPage: currentPage, viewportFraction: 0.999);
       return Scaffold(
           body: GestureDetector(
               onTapUp: _handleTap,
@@ -86,22 +95,22 @@ class ReadingPageState extends State<ReadingPage> {
                 children: <Widget>[
                   Container(
                       child: PageView.builder(
-                    controller: _pageController,
-                    physics: _scrollLocked
-                        ? NeverScrollableScrollPhysics()
-                        : ScrollPhysics(),
-                    itemCount: imagePaths.length,
-                    reverse: true,
-                    onPageChanged: _handlePageChange,
-                    itemBuilder: (context, i) {
-                      return PhotoView(
-                        backgroundColor: grey,
-                        imageProvider: FileImage(File(imagePaths[i])),
-                        minScale: PhotoViewComputedScale.contained,
-                        maxScale: PhotoViewComputedScale.contained * 2.5,
-                        scaleStateChangedCallback: _checkScaleState,
-                      );
-                    },
+                        controller: _pageController,
+                        physics: _scrollLocked
+                            ? NeverScrollableScrollPhysics()
+                            : ScrollPhysics(),
+                        itemCount: imagePaths.length,
+                        reverse: true,
+                        onPageChanged: _handlePageChange,
+                        itemBuilder: (context, i) {
+                          return PhotoView(
+                            backgroundColor: grey,
+                            imageProvider: FileImage(File(imagePaths[i])),
+                            minScale: PhotoViewComputedScale.contained,
+                            maxScale: PhotoViewComputedScale.contained * 2.5,
+                            scaleStateChangedCallback: _checkScaleState,
+                          );
+                        },
                   )),
                   _buildInfoBar(),
                   _buildControls()
@@ -171,7 +180,7 @@ class ReadingPageState extends State<ReadingPage> {
       setState(() {
         currentPage--;
         _pageController.previousPage(
-            duration: Duration(microseconds: 1), curve: ElasticOutCurve());
+            duration: Duration(microseconds: 1), curve: Threshold(0));
       });
     } else {
       //show controls (user has tapped in the middle of the screen)
@@ -240,6 +249,20 @@ class ReadingPageState extends State<ReadingPage> {
   void _showPagesGridview() {
     setState(() {
       _showGridview = true;
+    });
+  }
+
+  Future<bool> _handleGridBack() {
+    setState(() {
+      _showGridview = false;    
+    });
+    return Future.value(false);
+  }
+
+  void _handleGridPageTapped(int index) {
+    setState(() {
+      currentPage = index;
+      _showGridview = false;
     });
   }
 
