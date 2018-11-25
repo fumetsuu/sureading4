@@ -24,6 +24,7 @@ class ReadingPageState extends State<ReadingPage> {
   PageController _pageController;
   bool _scrollLocked = false;
   bool _controlsShowing = false;
+  bool _showGridview = false;
   TimeOfDay currTime = TimeOfDay.now();
   Timer timer;
 
@@ -56,6 +57,27 @@ class ReadingPageState extends State<ReadingPage> {
           body: Center(
               child: Text('loading...',
                   style: Theme.of(context).primaryTextTheme.headline)));
+    } else if(_showGridview) {
+      return Scaffold(
+        body: Container(
+          child: GridView.builder(
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: MediaQuery.of(context).size.width*0.3, childAspectRatio: 0.6),
+            itemCount: imagePaths.length,
+            itemBuilder: (context, i) {
+              return Container(
+                color: currentPage == i ? lightblue : Colors.transparent,
+                padding: EdgeInsets.all(8.0),
+                child: Column(
+                  children: <Widget>[
+                    Image(image: FileImage(File(imagePaths[i])), fit: BoxFit.fitHeight),
+                    Text((i+1).toString(), style: Theme.of(context).primaryTextTheme.button)
+                  ],
+                )
+              );
+            },
+          )
+        )
+      );
     } else {
       return Scaffold(
           body: GestureDetector(
@@ -162,25 +184,44 @@ class ReadingPageState extends State<ReadingPage> {
   }
 
   Widget _buildControls() {
+    if (!_controlsShowing) return Container();
+    
     return Positioned(
         bottom: 0,
         left: 0,
         width: MediaQuery.of(context).size.width,
-        height: 120,
+        height: 94,
         child: Container(
             color: black.withAlpha(200),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Slider(
-                  activeColor: lightblue,
-                  value: currentPage.toDouble()+1,
-                  min: 1,
-                  max: imagePaths.length.toDouble(),
-                  divisions: imagePaths.length,
-                  onChanged: _handleSliderChange,
-                  onChangeEnd: _handleSliderChangeEnd,
-                  inactiveColor: lightgrey,
+                Container(
+                  child: Slider(
+                    label: (currentPage+1).toString()+'/'+imagePaths.length.toString(),
+                    activeColor: lightblue,
+                    value: currentPage.toDouble()+1,
+                    min: 1,
+                    max: imagePaths.length.toDouble(),
+                    divisions: imagePaths.length,
+                    onChanged: _handleSliderChange,
+                    onChangeEnd: _handleSliderChangeEnd,
+                    inactiveColor: lightgrey,
+                  ),
+                  padding: EdgeInsets.all(6.0),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.0),
+                  child: Row(
+                    children: <Widget>[
+                      IconButton(
+                        icon: Icon(Icons.view_module),
+                        splashColor: lightblue,
+                        onPressed: _showPagesGridview,
+                      )
+                    ]
+                  )
                 )
               ],
             )));
@@ -194,6 +235,12 @@ class ReadingPageState extends State<ReadingPage> {
 
   void _handleSliderChangeEnd(double val) {
     _pageController.jumpToPage(currentPage);
+  }
+
+  void _showPagesGridview() {
+    setState(() {
+      _showGridview = true;
+    });
   }
 
 }
