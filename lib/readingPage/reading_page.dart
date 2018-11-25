@@ -31,7 +31,8 @@ class ReadingPageState extends State<ReadingPage> {
   void initState() {
     _populateImagePathsList();
     //TODO: set currentPage to page number saved in bookmarks
-    _pageController = PageController(initialPage: currentPage);
+    //viewportFraction hack to allow adjacent pages to load before scrolling
+    _pageController = PageController(initialPage: currentPage, viewportFraction: 0.99);
     SystemChrome.setEnabledSystemUIOverlays([]);
 
 
@@ -97,13 +98,13 @@ class ReadingPageState extends State<ReadingPage> {
       //go next page (user has tapped to the left of the screen)
       setState(() {
         currentPage++;
-        _pageController.jumpToPage(currentPage);
+        _pageController.nextPage(duration: Duration(microseconds: 1), curve: Threshold(0) );
       });
     } else if(dx > screenWidth - 30) {
       //go prev page (user has tapped to the right of the screen)
       setState(() {
         currentPage--;
-        _pageController.jumpToPage(currentPage);
+        _pageController.previousPage(duration: Duration(microseconds: 1), curve: ElasticOutCurve());
       });
     } else {
       //show controls (user has tapped in the middle of the screen)
