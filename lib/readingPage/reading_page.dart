@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/src/photo_view_scale_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../colours.dart';
 import '../util.dart';
@@ -33,19 +34,33 @@ class ReadingPageState extends State<ReadingPage> {
 
   void initState() {
     _populateImagePathsList();
-    //TODO: set currentPage to page number saved in bookmarks
+    _loadBookmark();
 
+    RawKeyboard.instance.addListener(_keyboardListener);
+  
     SystemChrome.setEnabledSystemUIOverlays([]);
 
     _initTimer();
-
     super.initState();
   }
 
   void dispose() {
     timer.cancel();
-    
+    _pageController.dispose();
+    RawKeyboard.instance.removeListener(_keyboardListener);
     super.dispose();
+  }
+
+  void _keyboardListener(RawKeyEvent e) {
+    if(e.runtimeType == RawKeyUpEvent) {
+      RawKeyEventDataAndroid eA = e.data;
+      if(eA.keyCode == 24) { //volume up key
+        _goNextPage();
+      }
+      if(eA.keyCode == 25) { //volume down key
+        _goPrevPage();
+      }
+    }
   }
 
   Widget build(BuildContext context) {
@@ -119,12 +134,20 @@ class ReadingPageState extends State<ReadingPage> {
     }
   }
 
+
   void _populateImagePathsList() {
     Directory(widget.volumePath).list().forEach((FileSystemEntity entity) {
       if (isImage(entity.path)) imagePaths.add(entity.path);
     }).then((_) {
       imagePaths.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
       setState(() {});
+    });
+  }
+
+  void _loadBookmark() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      currentPage = prefs.getInt(widget.volumePath) ?? 0;
     });
   }
 
@@ -170,18 +193,10 @@ class ReadingPageState extends State<ReadingPage> {
 
     if (dx < 30) {
       //go next page (user has tapped to the left of the screen)
-      setState(() {
-        currentPage++;
-        _pageController.nextPage(
-            duration: Duration(microseconds: 1), curve: Threshold(0));
-      });
+      _goNextPage();
     } else if (dx > screenWidth - 30) {
       //go prev page (user has tapped to the right of the screen)
-      setState(() {
-        currentPage--;
-        _pageController.previousPage(
-            duration: Duration(microseconds: 1), curve: Threshold(0));
-      });
+      _goPrevPage();
     } else {
       //show controls (user has tapped in the middle of the screen)
       setState(() {
@@ -192,10 +207,27 @@ class ReadingPageState extends State<ReadingPage> {
     }
   }
 
+  void _goNextPage() {
+    setState(() {
+      currentPage++;
+      _pageController.nextPage(
+          duration: Duration(microseconds: 1), curve: Threshold(0));
+    });
+  }
+
+  void _goPrevPage() {
+    setState(() {
+      currentPage--;
+      _pageController.previousPage(
+          duration: Duration(microseconds: 1), curve: Threshold(0));
+    });
+  }
+
   Widget _buildControls() {
     if (!_controlsShowing) return Container();
     
-    return Positioned(
+    return Builder(
+      builder: (context) => Positioned(
         bottom: 0,
         left: 0,
         width: MediaQuery.of(context).size.width,
@@ -228,12 +260,18 @@ class ReadingPageState extends State<ReadingPage> {
                         icon: Icon(Icons.view_module),
                         splashColor: lightblue,
                         onPressed: _showPagesGridview,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.bookmark),
+                        splashColor: lightblue,
+                        onPressed: () { _bookmarkPage(context); }
                       )
                     ]
                   )
                 )
-              ],
-            )));
+              ]
+            )
+        )));
   }
 
   void _handleSliderChange(double val) {
@@ -264,6 +302,14 @@ class ReadingPageState extends State<ReadingPage> {
       currentPage = index;
       _showGridview = false;
     });
+  }
+
+  void _bookmarkPage(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(widget.volumePath, currentPage);
+
+    final snackBar = SnackBar(content: Text('Bookmarked page ' + currentPage.toString()), duration: Duration(seconds: 1),backgroundColor: Color.fromARGB(150, 0, 0, 0));
+    Scaffold.of(context).showSnackBar(snackBar);
   }
 
 }

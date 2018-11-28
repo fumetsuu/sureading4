@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../colours.dart';
 import './home_card.dart';
@@ -25,13 +26,16 @@ class HomePageState extends State<HomePage> {
 
   Future<void> _setMediaFolderPath() async {
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
     try {
       final String result = await platform.invokeMethod('getDirPath');
+      prefs.setString('mediaFolderPath', result);
       setState(() {
-        _mediaFolderPath = result;      
+        _mediaFolderPath = result;
       });
     } on PlatformException catch (e) {
-      print(e.toString());
+      print(e);
     }
   }
 
