@@ -89,7 +89,8 @@ class ReadingPageState extends State<ReadingPage> {
                         Text((i+1).toString(), style: Theme.of(context).primaryTextTheme.button),
                         Container(
                           height: MediaQuery.of(context).size.height * 0.19,
-                          child: Image(image: FileImage(File(imagePaths[i]))),
+                          child: Image(image: FileImage(File(imagePaths[i])),
+                                  gaplessPlayback: true),
                         )
                       ],
                     )
@@ -307,6 +308,7 @@ class ReadingPageState extends State<ReadingPage> {
   void _bookmarkPage(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt(widget.volumePath, currentPage);
+    await prefs.setStringList('lastRead', [widget.volumePath, currentPage.toString()]);
 
     final snackBar = SnackBar(content: Text('Bookmarked page ' + currentPage.toString()), duration: Duration(seconds: 1),backgroundColor: Color.fromARGB(150, 0, 0, 0));
     Scaffold.of(context).showSnackBar(snackBar);

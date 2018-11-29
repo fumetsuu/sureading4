@@ -37,7 +37,6 @@ class VolumeCardState extends State<VolumeCard>{
   }
 
   void _gotoReadingPage(BuildContext context) {
-
     Navigator.push(context, MaterialPageRoute(builder: (context) => ReadingPage(widget.volumePath, widget.volumeTitle) ));
   }
 
