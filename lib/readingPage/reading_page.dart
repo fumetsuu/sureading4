@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/src/photo_view_scale_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 import '../colours.dart';
 import '../util.dart';
@@ -88,7 +89,7 @@ class ReadingPageState extends State<ReadingPage> {
                       children: <Widget>[
                         Text((i+1).toString(), style: Theme.of(context).primaryTextTheme.button),
                         Container(
-                          height: MediaQuery.of(context).size.height * 0.19,
+                          height: MediaQuery.of(context).size.height * 0.16,
                           child: Image(image: FileImage(File(imagePaths[i])),
                                   gaplessPlayback: true),
                         )
@@ -147,8 +148,9 @@ class ReadingPageState extends State<ReadingPage> {
 
   void _loadBookmark() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> bookmark = prefs.getStringList(bookmarkPrefix+widget.volumePath);
     setState(() {
-      currentPage = prefs.getInt(widget.volumePath) ?? 0;
+      currentPage = bookmark == null ? 0 : int.tryParse(bookmark[1]);
     });
   }
 
@@ -307,10 +309,10 @@ class ReadingPageState extends State<ReadingPage> {
 
   void _bookmarkPage(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(widget.volumePath, currentPage);
-    await prefs.setStringList('lastRead', [widget.volumePath, currentPage.toString()]);
+    await prefs.setStringList(bookmarkPrefix+widget.volumePath, [widget.volumePath, (currentPage+1).toString(), DateFormat('dd/MM/yyyy - KK:mm a').format(DateTime.now())]);
+    await prefs.setStringList('lastRead', [widget.volumePath, (currentPage+1).toString()]);
 
-    final snackBar = SnackBar(content: Text('Bookmarked page ' + currentPage.toString()), duration: Duration(seconds: 1),backgroundColor: Color.fromARGB(150, 0, 0, 0));
+    final snackBar = SnackBar(content: Text('Bookmarked page ' + (currentPage+1).toString()), duration: Duration(milliseconds: 500),backgroundColor: Color.fromARGB(150, 0, 0, 0));
     Scaffold.of(context).showSnackBar(snackBar);
   }
 

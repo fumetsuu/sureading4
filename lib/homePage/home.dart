@@ -8,6 +8,7 @@ import './home_card.dart';
 import '../readingPage/reading_page.dart';
 import '../card/card_gridview_builder.dart';
 import '../util.dart';
+import '../bookmarksPage/bookmarks_page.dart';
 
 class HomePage extends StatefulWidget {
   final String _mediaFolderPath;
@@ -74,11 +75,11 @@ class HomePageState extends State<HomePage> {
             title: Text('sureading',
                 style: Theme.of(context).primaryTextTheme.headline)),
                 drawer: Drawer(
-                  child: ListView(
-                    itemExtent: MediaQuery.of(context).size.height*0.2,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
                     children: <Widget>[
-                      Container(
-                        color: Color.fromARGB(150, 22, 22, 22),
+                      DrawerHeader(
+                        padding: EdgeInsets.all(0),
                         child: InkWell(
                           onTap: lastReadPath == null ? null : () {
                             Navigator.push(context, MaterialPageRoute(builder: (context) => ReadingPage(lastReadPath, lastReadTitle)));
@@ -95,7 +96,7 @@ class HomePageState extends State<HomePage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: <Widget>[
                                       Text('Continue Reading...', style: Theme.of(context).primaryTextTheme.subtitle),
-                                      Text(lastReadPath == null ? 'Bookmark a page!' : '$lastReadTitle - $lastReadVolume\npg.${lastReadPage.toString()}', style: Theme.of(context).primaryTextTheme.body2),
+                                      Text(lastReadPath == null ? 'Bookmark a page!' : '$lastReadTitle\n$lastReadVolume\npg.${lastReadPage.toString()}', style: Theme.of(context).primaryTextTheme.body2, overflow: TextOverflow.ellipsis),
                                     ],
                                   )
                                 )
@@ -103,6 +104,19 @@ class HomePageState extends State<HomePage> {
                             )
                           )
                         )
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.bookmark),
+                        title: Text('Bookmarks'),
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => BookmarksPage()));
+                        }
+                      ),
+                      Spacer(),
+                      ListTile(
+                        leading: Icon(Icons.delete, color: red),
+                        title: Text('Reset Data', style: TextStyle(color: red)),
+                        onTap: _resetData,
                       )
                     ],
                   )
@@ -134,11 +148,40 @@ class HomePageState extends State<HomePage> {
           lastReadImgPath = entity.path;
           lastReadPath = lastReadDetails[0];
           lastReadPage = int.tryParse(lastReadDetails[1]);
-          lastReadTitle = lastReadPath.split('/')[lastReadPath.split('/').length-2];
-          lastReadVolume = lastReadPath.split('/')[lastReadPath.split('/').length-1];  
+          lastReadTitle = getMangaTitle(lastReadPath);
+          lastReadVolume = getVolumeTitle(lastReadPath);
         });
       });
     }
+  }
+
+  void _resetData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Reset data'),
+          content: Text('Bookmarks and set media folder path will be reset.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Reset', style: TextStyle(color: red)),
+              onPressed: () {
+                prefs.clear();
+                Navigator.of(context).pop();
+              },
+            ),
+            FlatButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            )
+          ],
+        );
+      }
+    );
   }
 
 }

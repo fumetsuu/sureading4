@@ -12,8 +12,7 @@ class VolumeCard extends StatefulWidget {
   String volumeTitle;
 
   VolumeCard(this.volumePath) {
-    List<String> splits = volumePath.split('/');
-    volumeTitle = splits[splits.length-1];
+    volumeTitle = getVolumeTitle(volumePath);
   }
 
   @override
